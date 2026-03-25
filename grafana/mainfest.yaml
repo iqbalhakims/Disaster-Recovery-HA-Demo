@@ -6534,7 +6534,7 @@ spec:
           args:
             - create
             - --host=kube-prometheus-stack-operator,kube-prometheus-stack-operator.default.svc
-            - --namespace=default
+            - --namespace=monitoring
             - --secret-name=kube-prometheus-stack-admission
           securityContext:
           
