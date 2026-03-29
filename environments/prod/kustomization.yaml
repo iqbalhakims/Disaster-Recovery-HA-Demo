@@ -6,6 +6,6 @@ resources:
   - ../../cert-manager/prod/
   - ../../external-dns/prod/
   - ../../external-secrets/
-  - ../../grafana/
+  - ../../grafana/prod/
   - ../../istio/prod/
   - ../../tailscale/

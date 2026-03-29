@@ -6,6 +6,6 @@ resources:
   - ../../cert-manager/staging/
   - ../../external-dns/staging/
   - ../../external-secrets/
-  - ../../grafana/
+  - ../../grafana/staging/
   - ../../istio/staging/
   - ../../tailscale/
