@@ -5,14 +5,17 @@ metadata:
   name: istio-ingress-gateway
   namespace: istio-system
 spec:
+  selector:
+    app: istio-ingress
+    istio: ingress
   servers:
     - port:
         number: 80
         name: http
         protocol: HTTP
       hosts:
-        - grafana.iqbalhakim.live
-        - argocd.iqbalhakim.live
+        - grafana.prod.iqbalhakim.live
+        - argo.prod.iqbalhakim.live
       tls:
         httpsRedirect: true
     - port:
@@ -20,11 +23,11 @@ spec:
         name: https
         protocol: HTTPS
       hosts:
-        - grafana.iqbalhakim.live
-        - argocd.iqbalhakim.live
+        - grafana.prod.iqbalhakim.live
+        - argo.prod.iqbalhakim.live
       tls:
         mode: SIMPLE
-        credentialName: iqbalhakim-live-tls
+        credentialName: iqbalhakim-prod-tls
 ---
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
@@ -33,7 +36,15 @@ metadata:
   namespace: monitoring
 spec:
   hosts:
-    - grafana.iqbalhakim.live
+    - grafana.prod.iqbalhakim.live
+  gateways:
+    - istio-system/istio-ingress-gateway
+  http:
+    - route:
+        - destination:
+            host: kube-prometheus-stack-grafana.monitoring.svc.cluster.local
+            port:
+              number: 80
 ---
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
@@ -42,4 +53,12 @@ metadata:
   namespace: argocd
 spec:
   hosts:
-    - argocd.iqbalhakim.live
+    - argo.prod.iqbalhakim.live
+  gateways:
+    - istio-system/istio-ingress-gateway
+  http:
+    - route:
+        - destination:
+            host: argocd-server.argocd.svc.cluster.local
+            port:
+              number: 80
