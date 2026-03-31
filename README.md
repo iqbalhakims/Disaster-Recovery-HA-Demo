@@ -23,6 +23,67 @@ Kubernetes infrastructure setup running on DigitalOcean Kubernetes (DOKS).
 | Grafana / Prometheus | `grafana/` | Monitoring stack (kube-prometheus-stack) |
 | Istio | `istio/` | Service mesh + ingress gateway |
 | Tailscale | `tailscale/` | VPN operator for secure access |
+| Frontend | `charts/frontend/` | Helm chart for frontend application |
+| Backend | `charts/backend/` | Helm chart for backend application |
+
+## Application Helm Charts
+
+Frontend and backend are deployed as Helm charts managed by ArgoCD.
+
+### Chart structure
+
+```
+charts/
+├── frontend/
+│   ├── values.yaml           # base values
+│   ├── values-prod.yaml      # prod overrides
+│   ├── values-staging.yaml   # staging overrides
+│   └── templates/
+└── backend/
+    ├── values.yaml
+    ├── values-prod.yaml
+    ├── values-staging.yaml
+    └── templates/
+```
+
+ArgoCD Application manifests live in `argocd/apps/`:
+
+| File | Environment | App |
+|---|---|---|
+| `frontend.yaml` | prod | Frontend |
+| `backend.yaml` | prod | Backend |
+| `frontend-staging.yaml` | staging | Frontend |
+| `backend-staging.yaml` | staging | Backend |
+
+These are included via `environments/prod/kustomization.yaml` and `environments/staging/kustomization.yaml` and picked up by the app-of-apps.
+
+### Customizing per environment
+
+Edit the relevant `values-<env>.yaml` to override image tags, replica counts, hosts, and autoscaling:
+
+```yaml
+# charts/frontend/values-prod.yaml
+replicaCount: 2
+image:
+  tag: "prod-latest"
+ingress:
+  hosts:
+    - host: app.yourdomain.com
+      paths:
+        - path: /
+          pathType: Prefix
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+```
+
+### Before deploying
+
+1. Replace `your-registry/frontend` and `your-registry/backend` in `charts/*/values.yaml` with your actual image repositories.
+2. Replace `yourdomain.com` with your actual domain in all `values-*.yaml` files.
+3. Update `service.port` in `charts/backend/values.yaml` if your backend listens on a non-80 port (e.g. `8080`).
+4. Update `readinessProbe.path` for backend if it exposes a dedicated health endpoint (e.g. `/health`).
 
 ## Domains
 

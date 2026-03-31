@@ -3,6 +3,8 @@ kind: Kustomization
 
 resources:
   - ../../argocd/prod/
+  - ../../argocd/apps/frontend.yaml
+  - ../../argocd/apps/backend.yaml
   - ../../cert-manager/prod/
   - ../../external-dns/prod/
   - ../../external-secrets/

@@ -1,0 +1,12 @@
+replicaCount: 1
+
+image:
+  tag: "staging-latest"
+
+ingress:
+  enabled: true
+  hosts:
+    - host: api.staging.yourdomain.com
+      paths:
+        - path: /
+          pathType: Prefix
