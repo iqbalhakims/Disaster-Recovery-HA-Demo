@@ -11,15 +11,10 @@ spec:
       name: letsencrypt-prod-account-key
     solvers:
       - dns01:
-          route53:
-            region: us-east-1
-            hostedZoneID: Z06541262U0JLX5W7P6LN
-            accessKeyIDSecretRef:
-              name: route53-credentials
-              key: AWS_ACCESS_KEY_ID
-            secretAccessKeySecretRef:
-              name: route53-credentials
-              key: AWS_SECRET_ACCESS_KEY
+          cloudflare:
+            apiTokenSecretRef:
+              name: cloudflare-token
+              key: api-token
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
@@ -34,3 +29,5 @@ spec:
   dnsNames:
     - argo.prod.iqbalhakim.ink
     - grafana.prod.iqbalhakim.ink
+    - app.iqbalhakim.ink
+    - api.iqbalhakim.ink
