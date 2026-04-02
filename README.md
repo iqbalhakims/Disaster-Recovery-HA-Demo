@@ -2,6 +2,133 @@
 
 Kubernetes infrastructure setup running on DigitalOcean Kubernetes (DOKS).
 
+## Deployment Guide
+
+End-to-end steps to provision and deploy the stack from scratch.
+
+### 1. Terraform — Provision Infrastructure
+
+```bash
+cd terraform
+terraform init
+terraform apply
+```
+
+This creates:
+- DOKS cluster (`prod`, region `sgp1`, `s-2vcpu-8gb-amd`, 1 node)
+- AWS IAM OIDC provider + role `github-actions-coffman` for GitHub Actions
+- Runs `scripts/bootstrap.sh prod` automatically after cluster creation
+
+Get the GitHub Actions role ARN:
+```bash
+terraform output github_actions_role_arn
+```
+
+Set it as a GitHub repo variable: **Settings → Secrets and variables → Actions → Variables → `AWS_ROLE_ARN`**
+
+### 2. AWS Secrets Manager — Create Secrets
+
+```bash
+# DigitalOcean token (for CI to push images to DOCR)
+aws secretsmanager create-secret \
+  --name coffman/digitalocean-token \
+  --secret-string "dop_v1_<your-token>" \
+  --region ap-southeast-1
+
+# Cloudflare API token (for external-dns and cert-manager DNS-01)
+aws secretsmanager create-secret \
+  --name external-dns/cloudflare-token \
+  --secret-string '{"CF_API_TOKEN":"<your-cloudflare-token>"}' \
+  --region ap-southeast-1
+```
+
+Cloudflare token requires **Zone → DNS → Edit** permission for your domain.
+
+### 3. Bootstrap the Cluster
+
+If the Terraform bootstrap didn't run (cluster wasn't ready in time), run manually:
+
+```bash
+kubectl apply -k environments/prod/ --server-side --force-conflicts
+sleep 30
+kubectl apply -k environments/prod/ --server-side --force-conflicts
+sleep 30
+kubectl apply -k environments/prod/ --server-side --force-conflicts
+```
+
+Then create the bootstrap secret for External Secrets Operator (one-time, never stored in git):
+
+```bash
+kubectl create secret generic aws-sm-credentials \
+  -n external-secrets \
+  --from-literal=access-key=<AWS_ACCESS_KEY_ID> \
+  --from-literal=secret-access-key=<AWS_SECRET_ACCESS_KEY>
+```
+
+Restart external-secrets to pick it up:
+```bash
+kubectl rollout restart deployment external-secrets -n external-secrets
+```
+
+### 4. DOCR Pull Secret
+
+Allow the cluster to pull images from DigitalOcean Container Registry:
+
+```bash
+doctl registry kubernetes-manifest | kubectl apply -f -
+```
+
+The `registry-coffman` pull secret is referenced in `charts/*/values.yaml` via `imagePullSecrets`.
+
+### 5. CI/CD — Build & Push Images
+
+The GitHub Actions workflow (`.github/workflows/ci.yaml`) triggers on pushes to `apps/**`:
+
+1. Authenticates to AWS via OIDC using `AWS_ROLE_ARN`
+2. Fetches the DO token from AWS SM (`coffman/digitalocean-token`)
+3. Logs in to DOCR and builds/pushes `backend` and `frontend` images
+
+To trigger manually:
+```bash
+git commit --allow-empty -m "chore: trigger CI" && git push
+# or touch a file in apps/
+```
+
+Images are pushed to `registry.digitalocean.com/coffman/{backend,frontend}:{latest,<sha>}`.
+
+### 6. ArgoCD — Deploy Apps
+
+ArgoCD auto-syncs from this repo. Apps are defined in `argocd/apps/`:
+- `backend.yaml` → deploys `charts/backend/` with `values.yaml` + `values-prod.yaml`
+- `frontend.yaml` → deploys `charts/frontend/` with `values.yaml` + `values-prod.yaml`
+
+Access ArgoCD at `https://argo.prod.iqbalhakim.ink`.
+
+### 7. Live Endpoints
+
+| Service | URL |
+|---|---|
+| Frontend | `https://app.iqbalhakim.ink` |
+| Backend API | `https://api.iqbalhakim.ink` |
+| ArgoCD | `https://argo.prod.iqbalhakim.ink` |
+| Grafana | `https://grafana.prod.iqbalhakim.ink` |
+
+---
+
+## Known Fixes Applied
+
+| Issue | Fix |
+|---|---|
+| external-dns using Route53 instead of Cloudflare | Switched `--provider=cloudflare` in `external-dns/prod/deployment.yaml` |
+| cert-manager DNS-01 using Route53 | Switched to Cloudflare solver in `cert-manager/prod/cluster-issuer.yaml` |
+| App images failing to pull from DOCR | Added `imagePullSecrets: registry-coffman` to `charts/*/values.yaml` |
+| App pods crashing (port mismatch) | Changed `service.port` from `80` → `8080` in `charts/*/values.yaml` |
+| app/api not routed through Istio | Added VirtualServices in `istio/prod/virtualservices.yaml` |
+| app/api DNS not created by external-dns | Added hostnames to `external-dns.alpha.kubernetes.io/hostname` annotation in `istio/prod/ingress-service.yaml` |
+| CPU pressure on single node | Scaled `minReplicas` from `2` → `1` in `charts/*/values-prod.yaml` |
+
+---
+
 ## Cluster
 
 | Property | Value |
