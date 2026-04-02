@@ -139,21 +139,13 @@ spec:
             - --source=ingress
             - --policy=upsert-only
             - --registry=txt
-            - --provider=aws
-            - --zone-id-filter=Z06541262U0JLX5W7P6LN
+            - --provider=cloudflare
           env:
-            - name: AWS_ACCESS_KEY_ID
+            - name: CF_API_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: aws-credentials
-                  key: AWS_ACCESS_KEY_ID
-            - name: AWS_SECRET_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: aws-credentials
-                  key: AWS_SECRET_ACCESS_KEY
-            - name: AWS_REGION
-              value: us-east-1
+                  name: cloudflare-token
+                  key: CF_API_TOKEN
           ports:
             - name: http
               protocol: TCP
