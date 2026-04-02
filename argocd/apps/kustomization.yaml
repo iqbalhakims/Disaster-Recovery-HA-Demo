@@ -5,3 +5,4 @@ resources:
   - argo-rollouts.yaml
   - frontend.yaml
   - backend.yaml
+  - metrics-server.yaml
