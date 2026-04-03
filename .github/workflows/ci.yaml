@@ -62,6 +62,7 @@ jobs:
           git config user.email "github-actions@github.com"
           git add charts/backend/values-prod.yaml
           git commit -m "ci: update backend image tag to ${{ github.sha }}"
+          git pull --rebase origin main
           git push
 
   frontend:
@@ -112,4 +113,5 @@ jobs:
           git config user.email "github-actions@github.com"
           git add charts/frontend/values-prod.yaml
           git commit -m "ci: update frontend image tag to ${{ github.sha }}"
+          git pull --rebase origin main
           git push
