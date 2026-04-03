@@ -1,7 +1,7 @@
 replicaCount: 2
 
 image:
-  tag: "latest"
+  tag: "d925f34182d7bc2ba6e708c8cae289ec1bd355c6"
 
 ingress:
   enabled: true
