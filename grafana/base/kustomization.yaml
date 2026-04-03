@@ -7,3 +7,4 @@ resources:
   - mainfest.yaml
   - external-secrets.yaml
   - pdb.yaml
+  - dashboard-slo.yaml

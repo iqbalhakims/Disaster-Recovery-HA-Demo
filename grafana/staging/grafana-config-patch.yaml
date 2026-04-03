@@ -18,3 +18,4 @@ data:
     provisioning = /etc/grafana/provisioning
     [server]
     domain = grafana.staging.iqbalhakim.ink
+    root_url = https://grafana.staging.iqbalhakim.ink
