@@ -504,6 +504,106 @@ Day 7  Tear down DOKS cluster after confirming stable
 
 ---
 
+## Observability Demo Checklist
+
+A structured walkthrough to demonstrate the full monitoring stack in action.
+
+### Metrics to Highlight
+
+- [ ] **Request rate** — `rate(http_requests_total[5m])` per service, visible in Grafana
+- [ ] **Latency** — p50 / p95 / p99 via `histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))`
+- [ ] **Errors** — `rate(http_requests_total{status=~"5.."}[5m])` error rate per endpoint
+
+---
+
+### Simulate Failure Scenarios
+
+#### Pod Crash
+```bash
+# Delete a pod to trigger CrashLoopBackOff / restart counter spike
+kubectl delete pod -n apps -l app=backend --grace-period=0
+# Or inject a crash via bad command override in the deployment
+```
+
+#### High CPU
+```bash
+# Run a CPU stress container in the cluster
+kubectl run cpu-stress --image=containerstack/cpustress --restart=Never \
+  -- --cpu 2 --timeout 120s
+```
+
+#### Memory Leak
+```bash
+# Spin up a container that slowly allocates memory
+kubectl run mem-leak --image=polinux/stress --restart=Never \
+  -- stress --vm 1 --vm-bytes 256M --vm-hang 60
+```
+
+---
+
+### Observe in Grafana
+
+- [ ] **Alert fired** — AlertManager fires and routes to configured receiver (Slack / email)
+- [ ] **Grafana visualization** — Dashboard shows spike in error rate, latency, CPU/memory
+- [ ] **Recovery** — Metrics return to baseline after pod restarts / stress removed
+
+---
+
+### SLO & Error Budget
+
+- [ ] **SLO definition** — 99.9% availability (≤ 43.2 min downtime/month)
+- [ ] **Alert rule based on SLO** — Multi-window burn rate alert (5m + 1h windows):
+
+```yaml
+# PrometheusRule example
+- alert: HighErrorBudgetBurn
+  expr: |
+    (
+      rate(http_requests_total{status=~"5.."}[5m]) /
+      rate(http_requests_total[5m])
+    ) > 0.001  # 0.1% error rate = burning budget 14x fast
+  for: 2m
+  labels:
+    severity: critical
+  annotations:
+    summary: "Error budget burning too fast"
+```
+
+- [ ] **Error budget remaining** — `1 - (total_errors / total_requests)` over rolling 30d window
+- [ ] **Budget exhaustion ETA** — visible on Grafana SLO dashboard
+
+---
+
+### Resource Usage & Right-Sizing
+
+- [ ] **Current usage vs requests** — `kubectl top pods -A` vs defined requests/limits
+- [ ] **Over-provisioned pods** — containers with requests >> actual usage (wasted cost)
+- [ ] **Under-resourced pods** — containers hitting CPU throttle or OOM kills
+
+#### HPA Tuning
+```bash
+# Check current HPA state
+kubectl get hpa -n apps
+# Watch scaling events
+kubectl describe hpa -n apps backend
+```
+
+- [ ] **Scale-out trigger** — drive load with k6, observe HPA scale from 1 → N replicas
+- [ ] **Scale-in cooldown** — verify pods scale back down after load drops
+
+#### VPA (optional)
+```bash
+# Install VPA if not present
+kubectl apply -f https://github.com/kubernetes/autoscaler/releases/latest/download/vpa-v1-crd.yaml
+# Check VPA recommendations
+kubectl describe vpa -n apps
+```
+
+- [ ] **VPA recommendation** — `lowerBound` / `target` / `upperBound` for CPU and memory
+- [ ] **Apply recommendation** — update `resources.requests` in `charts/*/values-prod.yaml` to match VPA target
+
+---
+
 ## Apply order
 
 ```bash
