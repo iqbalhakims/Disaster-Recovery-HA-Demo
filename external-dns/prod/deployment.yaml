@@ -14,6 +14,7 @@ spec:
             - --interval=1m
             - --source=service
             - --source=ingress
+            - --source=istio-virtualservice
             - --policy=upsert-only
             - --registry=txt
             - --provider=cloudflare
