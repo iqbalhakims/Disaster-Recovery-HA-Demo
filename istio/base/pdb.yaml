@@ -4,7 +4,7 @@ metadata:
   name: istiod
   namespace: istio-system
 spec:
-  maxUnavailable: 1
+  minAvailable: 1
   selector:
     matchLabels:
       app: istiod
@@ -15,7 +15,7 @@ metadata:
   name: istio-ingress
   namespace: istio-system
 spec:
-  maxUnavailable: 1
+  minAvailable: 1
   selector:
     matchLabels:
       app: istio-ingress
