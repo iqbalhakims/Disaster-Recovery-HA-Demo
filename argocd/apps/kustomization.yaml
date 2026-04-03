@@ -6,3 +6,11 @@ resources:
   - frontend.yaml
   - backend.yaml
   - metrics-server.yaml
+  - cert-manager.yaml
+  - external-dns.yaml
+  - external-secrets.yaml
+  - grafana.yaml
+  - istio.yaml
+  - tailscale.yaml
+  - alert.yaml
+  - argo-image-updater.yaml

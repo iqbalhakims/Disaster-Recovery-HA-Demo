@@ -3,12 +3,4 @@ kind: Kustomization
 
 resources:
   - ../../argocd/prod/
-  - ../../argo-image-updater/
   - ../../argocd/apps/
-  - ../../cert-manager/prod/
-  - ../../external-dns/prod/
-  - ../../external-secrets/
-  - ../../grafana/prod/
-  - ../../istio/prod/
-  - ../../tailscale/
-  - ../../alert/prod/
