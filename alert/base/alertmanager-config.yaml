@@ -1,0 +1,63 @@
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+metadata:
+  name: telegram-routing
+  namespace: monitoring
+spec:
+  route:
+    receiver: telegram-warning
+    groupBy:
+      - alertname
+      - namespace
+      - team
+    groupWait: 30s
+    groupInterval: 5m
+    repeatInterval: 4h
+    routes:
+      - matchers:
+          - name: severity
+            value: critical
+        receiver: telegram-critical
+        groupWait: 10s
+        repeatInterval: 1h
+
+      - matchers:
+          - name: severity
+            value: warning
+        receiver: telegram-warning
+        repeatInterval: 4h
+
+  receivers:
+    - name: telegram-critical
+      telegramConfigs:
+        - botToken:
+            name: telegram-secret
+            key: bot-token
+          chatID: 224005742
+          parseMode: HTML
+          message: |
+            🚨 <b>CRITICAL ALERT</b>
+            {{ range .Alerts }}
+            <b>{{ .Annotations.summary }}</b>
+            {{ if .Annotations.description }}{{ .Annotations.description }}{{ end }}
+            {{ if .Annotations.runbook_url }}📘 <a href="{{ .Annotations.runbook_url }}">Runbook</a>{{ end }}
+            🏷 Severity: {{ .Labels.severity }} | Team: {{ .Labels.team }}
+            {{ end }}
+          sendResolved: true
+
+    - name: telegram-warning
+      telegramConfigs:
+        - botToken:
+            name: telegram-secret
+            key: bot-token
+          chatID: 224005742
+          parseMode: HTML
+          message: |
+            ⚠️ <b>WARNING ALERT</b>
+            {{ range .Alerts }}
+            <b>{{ .Annotations.summary }}</b>
+            {{ if .Annotations.description }}{{ .Annotations.description }}{{ end }}
+            {{ if .Annotations.runbook_url }}📘 <a href="{{ .Annotations.runbook_url }}">Runbook</a>{{ end }}
+            🏷 Severity: {{ .Labels.severity }} | Team: {{ .Labels.team }}
+            {{ end }}
+          sendResolved: true

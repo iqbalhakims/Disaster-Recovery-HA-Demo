@@ -1,0 +1,112 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: slo-alert-rules
+  namespace: monitoring
+  labels:
+    app: kube-prometheus-stack
+    release: kube-prometheus-stack
+spec:
+  groups:
+    # -------------------------------------------------------
+    # SLO Recording Rules
+    # -------------------------------------------------------
+    - name: slo.recording
+      interval: 30s
+      rules:
+        - record: api:error_rate_5m
+          expr: |
+            sum(rate(http_requests_total{status=~"5.."}[5m]))
+            /
+            sum(rate(http_requests_total[5m]))
+
+        - record: api:request_rate_5m
+          expr: |
+            sum(rate(http_requests_total[5m]))
+
+    # -------------------------------------------------------
+    # SLO Alerts — user impact driven
+    # -------------------------------------------------------
+    - name: slo.alerts
+      rules:
+        - alert: FastBurnSLO
+          expr: api:error_rate_5m > 0.05
+          for: 2m
+          labels:
+            severity: critical
+            team: backend
+          annotations:
+            summary: "FAST SLO burn - user impact happening now"
+            description: "Error rate is {{ $value | humanizePercentage }} (threshold: 5%) over the last 5 minutes."
+            runbook_url: "https://github.com/iqbalhakims/kube-promethues-stack-test/blob/main/runbooks/api-outage.md"
+
+        - alert: SlowBurnSLO
+          expr: api:error_rate_5m > 0.01
+          for: 15m
+          labels:
+            severity: warning
+            team: backend
+          annotations:
+            summary: "Slow SLO burn - risk of outage building up"
+            description: "Error rate is {{ $value | humanizePercentage }} (threshold: 1%) sustained for 15 minutes."
+            runbook_url: "https://github.com/iqbalhakims/kube-promethues-stack-test/blob/main/runbooks/api-outage.md"
+
+    # -------------------------------------------------------
+    # Infrastructure Alerts
+    # -------------------------------------------------------
+    - name: infra.alerts
+      rules:
+        - alert: NodeNotReady
+          expr: kube_node_status_condition{condition="Ready",status="true"} == 0
+          for: 2m
+          labels:
+            severity: critical
+            team: infra
+          annotations:
+            summary: "Node {{ $labels.node }} is not ready"
+            description: "Node {{ $labels.node }} has been unresponsive for more than 2 minutes."
+            runbook_url: "https://github.com/iqbalhakims/kube-promethues-stack-test/blob/main/runbooks/node-down.md"
+
+        - alert: PodCrashLooping
+          expr: rate(kube_pod_container_status_restarts_total[15m]) * 60 * 15 > 3
+          for: 5m
+          labels:
+            severity: warning
+            team: backend
+          annotations:
+            summary: "Pod {{ $labels.namespace }}/{{ $labels.pod }} is crash-looping"
+            description: "Container {{ $labels.container }} has restarted more than 3 times in the last 15 minutes."
+            runbook_url: "https://github.com/iqbalhakims/kube-promethues-stack-test/blob/main/runbooks/pod-crashloop.md"
+
+        - alert: HighNodeCPU
+          expr: 100 - (avg by(node) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+          for: 5m
+          labels:
+            severity: warning
+            team: infra
+          annotations:
+            summary: "High CPU on node {{ $labels.node }}"
+            description: "CPU usage is {{ $value | humanize }}% on node {{ $labels.node }}."
+            runbook_url: "https://github.com/iqbalhakims/kube-promethues-stack-test/blob/main/runbooks/node-down.md"
+
+        - alert: HighNodeMemory
+          expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 80
+          for: 5m
+          labels:
+            severity: warning
+            team: infra
+          annotations:
+            summary: "High memory on node {{ $labels.node }}"
+            description: "Memory usage is {{ $value | humanize }}% on node {{ $labels.node }}."
+            runbook_url: "https://github.com/iqbalhakims/kube-promethues-stack-test/blob/main/runbooks/node-down.md"
+
+        - alert: PersistentVolumeFillingUp
+          expr: kubelet_volume_stats_available_bytes / kubelet_volume_stats_capacity_bytes < 0.15
+          for: 5m
+          labels:
+            severity: warning
+            team: infra
+          annotations:
+            summary: "PVC {{ $labels.namespace }}/{{ $labels.persistentvolumeclaim }} is filling up"
+            description: "Only {{ $value | humanizePercentage }} available on volume {{ $labels.persistentvolumeclaim }}."
+            runbook_url: "https://github.com/iqbalhakims/kube-promethues-stack-test/blob/main/runbooks/node-down.md"

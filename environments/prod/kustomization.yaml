@@ -11,3 +11,4 @@ resources:
   - ../../grafana/prod/
   - ../../istio/prod/
   - ../../tailscale/
+  - ../../alert/prod/
