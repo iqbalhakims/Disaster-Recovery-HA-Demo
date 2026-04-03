@@ -110,3 +110,41 @@ spec:
             summary: "PVC {{ $labels.namespace }}/{{ $labels.persistentvolumeclaim }} is filling up"
             description: "Only {{ $value | humanizePercentage }} available on volume {{ $labels.persistentvolumeclaim }}."
             runbook_url: "https://github.com/iqbalhakims/kube-promethues-stack-test/blob/main/runbooks/node-down.md"
+
+    # -------------------------------------------------------
+    # Early Warning Alerts — before user detects impact
+    # -------------------------------------------------------
+    - name: early.warning.alerts
+      rules:
+        - alert: HighAPILatency
+          expr: histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket[5m]))) > 1
+          for: 5m
+          labels:
+            severity: warning
+            team: backend
+          annotations:
+            summary: "API P95 latency is high"
+            description: "P95 latency is {{ $value | humanizeDuration }}, exceeding 1s threshold for 5 minutes."
+            runbook_url: "https://github.com/iqbalhakims/kube-promethues-stack-test/blob/main/runbooks/api-outage.md"
+
+        - alert: DeploymentReplicasUnavailable
+          expr: kube_deployment_status_replicas_unavailable > 0
+          for: 2m
+          labels:
+            severity: warning
+            team: backend
+          annotations:
+            summary: "Deployment {{ $labels.namespace }}/{{ $labels.deployment }} has unavailable replicas"
+            description: "{{ $value }} replica(s) unavailable for more than 2 minutes."
+            runbook_url: "https://github.com/iqbalhakims/kube-promethues-stack-test/blob/main/runbooks/pod-crashloop.md"
+
+        - alert: HPAMaxedOut
+          expr: kube_horizontalpodautoscaler_status_current_replicas == kube_horizontalpodautoscaler_spec_max_replicas
+          for: 5m
+          labels:
+            severity: warning
+            team: backend
+          annotations:
+            summary: "HPA {{ $labels.namespace }}/{{ $labels.horizontalpodautoscaler }} is at max replicas"
+            description: "HPA has been at maximum replicas for 5 minutes — traffic may exceed capacity soon."
+            runbook_url: "https://github.com/iqbalhakims/kube-promethues-stack-test/blob/main/runbooks/api-outage.md"
