@@ -604,6 +604,17 @@ kubectl describe vpa -n apps
 
 ---
 
+## How TLS Certificate Issuance Works
+
+1. **You request a cert** — cert-manager asks Let's Encrypt for a certificate for `grafana.prod.iqbalhakim.ink`
+2. **Let's Encrypt challenges you** — "prove you own this domain" by placing a specific token at a known URL or DNS record
+3. **Your setup uses DNS-01 challenge** — cert-manager creates a `_acme-challenge.grafana.prod.iqbalhakim.ink` TXT record via Cloudflare to prove domain ownership
+4. **Let's Encrypt verifies** — it queries that DNS TXT record, sees the token, and says "ok you own it"
+5. **Cert is issued** — cert-manager stores it as a Kubernetes secret `iqbalhakim-prod-tls`
+6. **Istio uses it** — the Gateway reads that secret to terminate HTTPS
+
+---
+
 ## Apply order
 
 ```bash
