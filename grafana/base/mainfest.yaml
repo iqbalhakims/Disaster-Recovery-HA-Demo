@@ -124,9 +124,6 @@ metadata:
     app.kubernetes.io/version: "12.1.0"
 type: Opaque
 data:
-  
-  admin-user: "YWRtaW4="
-  admin-password: "cHJvbS1vcGVyYXRvcg=="
   ldap-toml: ""
 ---
 # Source: kube-prometheus-stack/templates/alertmanager/secret.yaml
