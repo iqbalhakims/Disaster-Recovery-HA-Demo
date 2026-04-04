@@ -1,0 +1,371 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-dr
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  dr-dashboard.json: |
+    {
+      "title": "DR Dashboard",
+      "uid": "dr-dashboard",
+      "timezone": "browser",
+      "refresh": "30s",
+      "time": { "from": "now-1h", "to": "now" },
+      "panels": [
+        {
+          "id": 1,
+          "title": "Nodes Ready",
+          "type": "stat",
+          "gridPos": { "x": 0, "y": 0, "w": 4, "h": 4 },
+          "options": {
+            "reduceOptions": { "calcs": ["lastNotNull"] },
+            "colorMode": "background",
+            "textMode": "value_and_name"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "red", "value": null },
+                  { "color": "green", "value": 1 }
+                ]
+              }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(kube_node_status_condition{condition=\"Ready\",status=\"true\"})",
+              "legendFormat": "Ready"
+            },
+            {
+              "expr": "sum(kube_node_status_condition{condition=\"Ready\",status=\"false\"})",
+              "legendFormat": "Not Ready"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "title": "Pods Running",
+          "type": "stat",
+          "gridPos": { "x": 4, "y": 0, "w": 4, "h": 4 },
+          "options": {
+            "reduceOptions": { "calcs": ["lastNotNull"] },
+            "colorMode": "background",
+            "textMode": "value_and_name"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "red", "value": null },
+                  { "color": "green", "value": 1 }
+                ]
+              }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(kube_pod_status_phase{phase=\"Running\"})",
+              "legendFormat": "Running"
+            },
+            {
+              "expr": "sum(kube_pod_status_phase{phase=~\"Failed|Unknown\"})",
+              "legendFormat": "Failed/Unknown"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "title": "PVC Bound",
+          "type": "stat",
+          "gridPos": { "x": 8, "y": 0, "w": 4, "h": 4 },
+          "options": {
+            "reduceOptions": { "calcs": ["lastNotNull"] },
+            "colorMode": "background",
+            "textMode": "value_and_name"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "red", "value": null },
+                  { "color": "green", "value": 1 }
+                ]
+              }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(kube_persistentvolumeclaim_status_phase{phase=\"Bound\"})",
+              "legendFormat": "Bound"
+            },
+            {
+              "expr": "sum(kube_persistentvolumeclaim_status_phase{phase!=\"Bound\"})",
+              "legendFormat": "Unbound"
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "title": "Deployments Available",
+          "type": "stat",
+          "gridPos": { "x": 12, "y": 0, "w": 4, "h": 4 },
+          "options": {
+            "reduceOptions": { "calcs": ["lastNotNull"] },
+            "colorMode": "background"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "red", "value": 1 }
+                ]
+              }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(kube_deployment_status_replicas_unavailable) > 0 or vector(0)",
+              "legendFormat": "Unavailable Replicas"
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "title": "StatefulSets Ready",
+          "type": "stat",
+          "gridPos": { "x": 16, "y": 0, "w": 4, "h": 4 },
+          "options": {
+            "reduceOptions": { "calcs": ["lastNotNull"] },
+            "colorMode": "background"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "red", "value": 1 }
+                ]
+              }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(kube_statefulset_replicas - kube_statefulset_status_replicas_ready) > 0 or vector(0)",
+              "legendFormat": "Not Ready Replicas"
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "title": "Node Status",
+          "type": "row",
+          "gridPos": { "x": 0, "y": 4, "w": 24, "h": 1 },
+          "collapsed": false
+        },
+        {
+          "id": 7,
+          "title": "Node Conditions Over Time",
+          "type": "timeseries",
+          "gridPos": { "x": 0, "y": 5, "w": 12, "h": 8 },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": { "lineWidth": 2 }
+            }
+          },
+          "options": {
+            "tooltip": { "mode": "multi" },
+            "legend": { "displayMode": "list", "placement": "bottom" }
+          },
+          "targets": [
+            {
+              "expr": "sum(kube_node_status_condition{condition=\"Ready\",status=\"true\"})",
+              "legendFormat": "Ready"
+            },
+            {
+              "expr": "sum(kube_node_status_condition{condition=\"MemoryPressure\",status=\"true\"})",
+              "legendFormat": "MemoryPressure"
+            },
+            {
+              "expr": "sum(kube_node_status_condition{condition=\"DiskPressure\",status=\"true\"})",
+              "legendFormat": "DiskPressure"
+            }
+          ]
+        },
+        {
+          "id": 8,
+          "title": "Pod Restarts (1h)",
+          "type": "timeseries",
+          "gridPos": { "x": 12, "y": 5, "w": 12, "h": 8 },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": { "lineWidth": 2 },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 3 },
+                  { "color": "red", "value": 10 }
+                ]
+              }
+            }
+          },
+          "options": {
+            "tooltip": { "mode": "multi" },
+            "legend": { "displayMode": "list", "placement": "bottom" }
+          },
+          "targets": [
+            {
+              "expr": "sum by (namespace, pod) (increase(kube_pod_container_status_restarts_total[1h])) > 0",
+              "legendFormat": "{{namespace}}/{{pod}}"
+            }
+          ]
+        },
+        {
+          "id": 9,
+          "title": "Workload Health",
+          "type": "row",
+          "gridPos": { "x": 0, "y": 13, "w": 24, "h": 1 },
+          "collapsed": false
+        },
+        {
+          "id": 10,
+          "title": "Deployment Desired vs Available Replicas",
+          "type": "timeseries",
+          "gridPos": { "x": 0, "y": 14, "w": 12, "h": 8 },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": { "lineWidth": 2 }
+            }
+          },
+          "options": {
+            "tooltip": { "mode": "multi" },
+            "legend": { "displayMode": "list", "placement": "bottom" }
+          },
+          "targets": [
+            {
+              "expr": "sum by (namespace, deployment) (kube_deployment_spec_replicas)",
+              "legendFormat": "Desired: {{namespace}}/{{deployment}}"
+            },
+            {
+              "expr": "sum by (namespace, deployment) (kube_deployment_status_replicas_available)",
+              "legendFormat": "Available: {{namespace}}/{{deployment}}"
+            }
+          ]
+        },
+        {
+          "id": 11,
+          "title": "PVC Status",
+          "type": "timeseries",
+          "gridPos": { "x": 12, "y": 14, "w": 12, "h": 8 },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": { "lineWidth": 2 },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "red", "value": 1 }
+                ]
+              }
+            }
+          },
+          "options": {
+            "tooltip": { "mode": "multi" },
+            "legend": { "displayMode": "list", "placement": "bottom" }
+          },
+          "targets": [
+            {
+              "expr": "sum by (namespace, persistentvolumeclaim) (kube_persistentvolumeclaim_status_phase{phase!=\"Bound\"})",
+              "legendFormat": "Unbound: {{namespace}}/{{persistentvolumeclaim}}"
+            }
+          ]
+        },
+        {
+          "id": 12,
+          "title": "Resource Pressure",
+          "type": "row",
+          "gridPos": { "x": 0, "y": 22, "w": 24, "h": 1 },
+          "collapsed": false
+        },
+        {
+          "id": 13,
+          "title": "CPU Usage by Node",
+          "type": "timeseries",
+          "gridPos": { "x": 0, "y": 23, "w": 12, "h": 8 },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "custom": { "lineWidth": 2 },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 0.7 },
+                  { "color": "red", "value": 0.9 }
+                ]
+              }
+            }
+          },
+          "options": {
+            "tooltip": { "mode": "multi" },
+            "legend": { "displayMode": "list", "placement": "bottom" }
+          },
+          "targets": [
+            {
+              "expr": "1 - avg by (node) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m]))",
+              "legendFormat": "{{node}}"
+            }
+          ]
+        },
+        {
+          "id": 14,
+          "title": "Memory Usage by Node",
+          "type": "timeseries",
+          "gridPos": { "x": 12, "y": 23, "w": 12, "h": 8 },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "custom": { "lineWidth": 2 },
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 0.7 },
+                  { "color": "red", "value": 0.9 }
+                ]
+              }
+            }
+          },
+          "options": {
+            "tooltip": { "mode": "multi" },
+            "legend": { "displayMode": "list", "placement": "bottom" }
+          },
+          "targets": [
+            {
+              "expr": "1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)",
+              "legendFormat": "{{instance}}"
+            }
+          ]
+        }
+      ],
+      "schemaVersion": 39,
+      "version": 1
+    }

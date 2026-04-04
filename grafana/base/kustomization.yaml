@@ -8,3 +8,4 @@ resources:
   - external-secrets.yaml
   - pdb.yaml
   - dashboard-slo.yaml
+  - dashboard-dr.yaml
