@@ -59,6 +59,15 @@ resource "null_resource" "bootstrap" {
   }
 }
 
+resource "digitalocean_database_cluster" "grafana_mysql" {
+  name       = "grafana-db"
+  engine     = "mysql"
+  version    = "8"
+  size       = "db-s-1vcpu-1gb"
+  region     = "sgp1"
+  node_count = 1
+}
+
 output "cluster_id" {
   value = digitalocean_kubernetes_cluster.prod.id
 }
