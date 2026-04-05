@@ -12,6 +12,19 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring
+  ignoreDifferences:
+    - group: ""
+      kind: Secret
+      name: alertmanager-kube-prometheus-stack-alertmanager
+      namespace: monitoring
+      jsonPointers:
+        - /data
+    - group: ""
+      kind: Secret
+      name: kube-prometheus-stack-grafana
+      namespace: monitoring
+      jsonPointers:
+        - /data
   syncPolicy:
     automated:
       prune: true
