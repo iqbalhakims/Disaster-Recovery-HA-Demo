@@ -3,3 +3,6 @@ kind: Kustomization
 
 resources:
   - manifest.yaml
+
+patches:
+  - path: ha-patch.yaml

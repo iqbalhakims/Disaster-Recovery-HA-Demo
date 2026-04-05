@@ -1,8 +1,8 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: external-dns
-  namespace: external-dns
+  name: argocd-image-updater-controller
+  namespace: argocd
 spec:
   replicas: 2
   strategy:
@@ -17,7 +17,7 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             - labelSelector:
                 matchLabels:
-                  app.kubernetes.io/name: external-dns
+                  app.kubernetes.io/name: argocd-image-updater
               topologyKey: kubernetes.io/hostname
       topologySpreadConstraints:
         - maxSkew: 1
@@ -25,16 +25,4 @@ spec:
           whenUnsatisfiable: DoNotSchedule
           labelSelector:
             matchLabels:
-              app.kubernetes.io/name: external-dns
-      containers:
-        - name: external-dns
-          args:
-            - --log-level=info
-            - --log-format=text
-            - --interval=1m
-            - --source=service
-            - --source=ingress
-            - --source=istio-virtualservice
-            - --policy=upsert-only
-            - --registry=txt
-            - --provider=cloudflare
+              app.kubernetes.io/name: argocd-image-updater
