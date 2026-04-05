@@ -1,0 +1,344 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-k6
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  k6-dashboard.json: |
+    {
+      "title": "k6 Load Test",
+      "uid": "k6-dashboard",
+      "timezone": "browser",
+      "refresh": "10s",
+      "time": { "from": "now-30m", "to": "now" },
+      "panels": [
+        {
+          "id": 1,
+          "title": "Virtual Users",
+          "type": "stat",
+          "gridPos": { "x": 0, "y": 0, "w": 4, "h": 4 },
+          "options": {
+            "reduceOptions": { "calcs": ["lastNotNull"] },
+            "colorMode": "background",
+            "textMode": "auto",
+            "orientation": "auto"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [{ "color": "blue", "value": null }]
+              }
+            }
+          },
+          "targets": [
+            {
+              "expr": "k6_vus",
+              "legendFormat": "VUs"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "title": "Request Rate",
+          "type": "stat",
+          "gridPos": { "x": 4, "y": 0, "w": 4, "h": 4 },
+          "options": {
+            "reduceOptions": { "calcs": ["lastNotNull"] },
+            "colorMode": "background"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [{ "color": "green", "value": null }]
+              }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(rate(k6_http_reqs_total[1m]))",
+              "legendFormat": "Req/s"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "title": "Error Rate",
+          "type": "stat",
+          "gridPos": { "x": 8, "y": 0, "w": 4, "h": 4 },
+          "options": {
+            "reduceOptions": { "calcs": ["lastNotNull"] },
+            "colorMode": "background"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 0.005 },
+                  { "color": "red", "value": 0.01 }
+                ]
+              }
+            }
+          },
+          "targets": [
+            {
+              "expr": "k6_errors_rate",
+              "legendFormat": "Error Rate"
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "title": "P95 HTTP Duration",
+          "type": "stat",
+          "gridPos": { "x": 12, "y": 0, "w": 4, "h": 4 },
+          "options": {
+            "reduceOptions": { "calcs": ["lastNotNull"] },
+            "colorMode": "background"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 300 },
+                  { "color": "red", "value": 500 }
+                ]
+              }
+            }
+          },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.95, sum by (le) (rate(k6_http_req_duration_seconds_bucket[1m]))) * 1000",
+              "legendFormat": "P95"
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "title": "HTTP Failed",
+          "type": "stat",
+          "gridPos": { "x": 16, "y": 0, "w": 4, "h": 4 },
+          "options": {
+            "reduceOptions": { "calcs": ["lastNotNull"] },
+            "colorMode": "background"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 0.005 },
+                  { "color": "red", "value": 0.01 }
+                ]
+              }
+            }
+          },
+          "targets": [
+            {
+              "expr": "k6_http_req_failed_rate",
+              "legendFormat": "Failed"
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "title": "Total Requests",
+          "type": "stat",
+          "gridPos": { "x": 20, "y": 0, "w": 4, "h": 4 },
+          "options": {
+            "reduceOptions": { "calcs": ["sum"] },
+            "colorMode": "value"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [{ "color": "purple", "value": null }]
+              }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(increase(k6_http_reqs_total[30m]))",
+              "legendFormat": "Total"
+            }
+          ]
+        },
+        {
+          "id": 7,
+          "title": "Virtual Users Over Time",
+          "type": "timeseries",
+          "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": { "lineWidth": 2, "fillOpacity": 10 }
+            }
+          },
+          "options": {
+            "tooltip": { "mode": "multi" },
+            "legend": { "displayMode": "list", "placement": "bottom" }
+          },
+          "targets": [
+            {
+              "expr": "k6_vus",
+              "legendFormat": "{{scenario}}"
+            }
+          ]
+        },
+        {
+          "id": 8,
+          "title": "Request Rate Over Time",
+          "type": "timeseries",
+          "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "reqps",
+              "custom": { "lineWidth": 2 }
+            }
+          },
+          "options": {
+            "tooltip": { "mode": "multi" },
+            "legend": { "displayMode": "list", "placement": "bottom" }
+          },
+          "targets": [
+            {
+              "expr": "sum by (scenario) (rate(k6_http_reqs_total[1m]))",
+              "legendFormat": "{{scenario}}"
+            }
+          ]
+        },
+        {
+          "id": 9,
+          "title": "HTTP Request Duration — Backend vs Frontend",
+          "type": "timeseries",
+          "gridPos": { "x": 0, "y": 12, "w": 24, "h": 8 },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms",
+              "custom": { "lineWidth": 2 }
+            }
+          },
+          "options": {
+            "tooltip": { "mode": "multi" },
+            "legend": { "displayMode": "list", "placement": "bottom" }
+          },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.50, sum by (le) (rate(k6_backend_latency_seconds_bucket[1m]))) * 1000",
+              "legendFormat": "Backend P50"
+            },
+            {
+              "expr": "histogram_quantile(0.95, sum by (le) (rate(k6_backend_latency_seconds_bucket[1m]))) * 1000",
+              "legendFormat": "Backend P95"
+            },
+            {
+              "expr": "histogram_quantile(0.50, sum by (le) (rate(k6_frontend_latency_seconds_bucket[1m]))) * 1000",
+              "legendFormat": "Frontend P50"
+            },
+            {
+              "expr": "histogram_quantile(0.95, sum by (le) (rate(k6_frontend_latency_seconds_bucket[1m]))) * 1000",
+              "legendFormat": "Frontend P95"
+            },
+            {
+              "expr": "vector(500)",
+              "legendFormat": "P95 Threshold (500ms)"
+            }
+          ]
+        },
+        {
+          "id": 10,
+          "title": "Error Rate Over Time",
+          "type": "timeseries",
+          "gridPos": { "x": 0, "y": 20, "w": 12, "h": 8 },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percentunit",
+              "custom": { "lineWidth": 2 }
+            },
+            "overrides": [
+              {
+                "matcher": { "id": "byName", "options": "Threshold (1%)" },
+                "properties": [
+                  { "id": "custom.lineStyle", "value": { "dash": [8, 4], "fill": "dash" } },
+                  { "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "tooltip": { "mode": "multi" },
+            "legend": { "displayMode": "list", "placement": "bottom" }
+          },
+          "targets": [
+            {
+              "expr": "k6_errors_rate",
+              "legendFormat": "Error Rate"
+            },
+            {
+              "expr": "vector(0.01)",
+              "legendFormat": "Threshold (1%)"
+            }
+          ]
+        },
+        {
+          "id": 11,
+          "title": "HTTP Request Duration — P50 / P95 / P99",
+          "type": "timeseries",
+          "gridPos": { "x": 12, "y": 20, "w": 12, "h": 8 },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "ms",
+              "custom": { "lineWidth": 2 }
+            },
+            "overrides": [
+              {
+                "matcher": { "id": "byName", "options": "Threshold (500ms)" },
+                "properties": [
+                  { "id": "custom.lineStyle", "value": { "dash": [8, 4], "fill": "dash" } },
+                  { "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }
+                ]
+              }
+            ]
+          },
+          "options": {
+            "tooltip": { "mode": "multi" },
+            "legend": { "displayMode": "list", "placement": "bottom" }
+          },
+          "targets": [
+            {
+              "expr": "histogram_quantile(0.50, sum by (le) (rate(k6_http_req_duration_seconds_bucket[1m]))) * 1000",
+              "legendFormat": "P50"
+            },
+            {
+              "expr": "histogram_quantile(0.95, sum by (le) (rate(k6_http_req_duration_seconds_bucket[1m]))) * 1000",
+              "legendFormat": "P95"
+            },
+            {
+              "expr": "histogram_quantile(0.99, sum by (le) (rate(k6_http_req_duration_seconds_bucket[1m]))) * 1000",
+              "legendFormat": "P99"
+            },
+            {
+              "expr": "vector(500)",
+              "legendFormat": "Threshold (500ms)"
+            }
+          ]
+        }
+      ],
+      "schemaVersion": 39,
+      "version": 1
+    }

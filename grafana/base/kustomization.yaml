@@ -9,3 +9,4 @@ resources:
   - dashboard-slo.yaml
   - dashboard-dr.yaml
   - dashboard-topology.yaml
+  - dashboard-k6.yaml
