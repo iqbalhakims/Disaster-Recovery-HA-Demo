@@ -51,7 +51,11 @@ resource "null_resource" "bootstrap" {
   depends_on = [local_file.kubeconfig]
 
   provisioner "local-exec" {
-    command = "KUBECONFIG=${path.module}/kubeconfig.yaml ../scripts/bootstrap.sh prod"
+    command = "../scripts/bootstrap.sh prod"
+    environment = {
+      KUBECONFIG = "${path.module}/kubeconfig.yaml"
+      PATH       = "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+    }
   }
 }
 
