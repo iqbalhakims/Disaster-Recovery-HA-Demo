@@ -1,0 +1,274 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-topology
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  topology-dashboard.json: |
+    {
+      "title": "Topology Spread Constraints",
+      "uid": "topology-dashboard",
+      "timezone": "browser",
+      "refresh": "30s",
+      "time": { "from": "now-1h", "to": "now" },
+      "panels": [
+        {
+          "id": 1,
+          "title": "Unschedulable Pods",
+          "type": "stat",
+          "gridPos": { "x": 0, "y": 0, "w": 4, "h": 4 },
+          "options": {
+            "reduceOptions": { "calcs": ["lastNotNull"] },
+            "colorMode": "background",
+            "textMode": "value_and_name"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 1 },
+                  { "color": "red", "value": 3 }
+                ]
+              }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(kube_pod_status_unschedulable) or vector(0)",
+              "legendFormat": "Unschedulable"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "title": "Total Running Pods",
+          "type": "stat",
+          "gridPos": { "x": 4, "y": 0, "w": 4, "h": 4 },
+          "options": {
+            "reduceOptions": { "calcs": ["lastNotNull"] },
+            "colorMode": "background",
+            "textMode": "value_and_name"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null }
+                ]
+              }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(kube_pod_status_phase{phase=\"Running\"}) or vector(0)",
+              "legendFormat": "Running"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "title": "Nodes Available",
+          "type": "stat",
+          "gridPos": { "x": 8, "y": 0, "w": 4, "h": 4 },
+          "options": {
+            "reduceOptions": { "calcs": ["lastNotNull"] },
+            "colorMode": "background",
+            "textMode": "value_and_name"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "red", "value": null },
+                  { "color": "yellow", "value": 1 },
+                  { "color": "green", "value": 2 }
+                ]
+              }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum(kube_node_status_condition{condition=\"Ready\",status=\"true\"}) or vector(0)",
+              "legendFormat": "Ready Nodes"
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "title": "Max Pod Skew Across Nodes",
+          "type": "stat",
+          "gridPos": { "x": 12, "y": 0, "w": 4, "h": 4 },
+          "options": {
+            "reduceOptions": { "calcs": ["lastNotNull"] },
+            "colorMode": "background",
+            "textMode": "value_and_name"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 3 },
+                  { "color": "red", "value": 6 }
+                ]
+              }
+            }
+          },
+          "targets": [
+            {
+              "expr": "max(sum by (node) (kube_pod_info{node!=\"\"})) - min(sum by (node) (kube_pod_info{node!=\"\"}))",
+              "legendFormat": "Skew"
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "title": "Pod Distribution per Node",
+          "type": "barchart",
+          "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+          "options": {
+            "orientation": "auto",
+            "xTickLabelRotation": -30,
+            "legend": { "displayMode": "list", "placement": "bottom" }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "color": { "mode": "palette-classic" }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (node) (kube_pod_info{node!=\"\"})",
+              "legendFormat": "{{node}}",
+              "instant": true
+            }
+          ]
+        },
+        {
+          "id": 6,
+          "title": "Pod Distribution per Zone",
+          "type": "barchart",
+          "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+          "options": {
+            "orientation": "auto",
+            "xTickLabelRotation": -30,
+            "legend": { "displayMode": "list", "placement": "bottom" }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "color": { "mode": "palette-classic" }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (label_topology_kubernetes_io_zone) (kube_node_labels * on(node) group_right() sum by (node) (kube_pod_info{node!=\"\"}))",
+              "legendFormat": "{{label_topology_kubernetes_io_zone}}",
+              "instant": true
+            }
+          ]
+        },
+        {
+          "id": 7,
+          "title": "Pods per Node over Time",
+          "type": "timeseries",
+          "gridPos": { "x": 0, "y": 12, "w": 24, "h": 8 },
+          "options": {
+            "legend": { "displayMode": "list", "placement": "bottom" },
+            "tooltip": { "mode": "multi" }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": { "lineWidth": 2 }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (node) (kube_pod_info{node!=\"\"})",
+              "legendFormat": "{{node}}"
+            }
+          ]
+        },
+        {
+          "id": 8,
+          "title": "Unschedulable Pods over Time",
+          "type": "timeseries",
+          "gridPos": { "x": 0, "y": 20, "w": 12, "h": 8 },
+          "options": {
+            "legend": { "displayMode": "list", "placement": "bottom" },
+            "tooltip": { "mode": "multi" }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": { "lineWidth": 2 },
+              "color": { "fixedColor": "red", "mode": "fixed" }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (namespace, pod) (kube_pod_status_unschedulable > 0)",
+              "legendFormat": "{{namespace}}/{{pod}}"
+            }
+          ]
+        },
+        {
+          "id": 9,
+          "title": "Pod Scheduling Failures by Reason",
+          "type": "timeseries",
+          "gridPos": { "x": 12, "y": 20, "w": 12, "h": 8 },
+          "options": {
+            "legend": { "displayMode": "list", "placement": "bottom" },
+            "tooltip": { "mode": "multi" }
+          },
+          "fieldConfig": {
+            "defaults": {
+              "unit": "short",
+              "custom": { "lineWidth": 2 }
+            }
+          },
+          "targets": [
+            {
+              "expr": "sum by (reason) (kube_pod_status_reason{reason=~\"Evicted|Preempting|NodeAffinity|Unschedulable\"} > 0)",
+              "legendFormat": "{{reason}}"
+            }
+          ]
+        },
+        {
+          "id": 10,
+          "title": "Pods by Namespace per Node",
+          "type": "table",
+          "gridPos": { "x": 0, "y": 28, "w": 24, "h": 8 },
+          "options": {
+            "sortBy": [{ "displayName": "Value", "desc": true }]
+          },
+          "fieldConfig": {
+            "defaults": { "unit": "short" }
+          },
+          "targets": [
+            {
+              "expr": "sum by (node, namespace) (kube_pod_info{node!=\"\"})",
+              "legendFormat": "{{node}} / {{namespace}}",
+              "instant": true,
+              "format": "table"
+            }
+          ],
+          "transformations": [
+            { "id": "sortBy", "options": { "fields": [{ "displayName": "Value", "desc": true }] } }
+          ]
+        }
+      ]
+    }

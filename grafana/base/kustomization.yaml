@@ -9,3 +9,4 @@ resources:
   - pdb.yaml
   - dashboard-slo.yaml
   - dashboard-dr.yaml
+  - dashboard-topology.yaml

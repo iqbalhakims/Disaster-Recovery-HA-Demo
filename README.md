@@ -1,4 +1,4 @@
-# kube-prometheus-stack
+# Disaster-Revcovery-Testing
 
 Kubernetes infrastructure setup running on DigitalOcean Kubernetes (DOKS).
 
