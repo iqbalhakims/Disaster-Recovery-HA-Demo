@@ -14,3 +14,4 @@ resources:
   - tailscale.yaml
   - alert.yaml
   - argo-image-updater.yaml
+  - litmuschaos.yaml
