@@ -22,13 +22,9 @@ data:
           executor: 'ramping-vus',
           startVUs: 0,
           stages: [
-            { duration: '1m', target: 500 },    // ramp to 500
-            { duration: '1m', target: 1000 },   // ramp to 1000
-            { duration: '1m', target: 1500 },   // ramp to 1500
-            { duration: '1m', target: 2000 },   // ramp to 2000
-            { duration: '1m', target: 2500 },   // ramp to 2500 — expect failures here
-            { duration: '2m', target: 2500 },   // hold at peak
-            { duration: '1m', target: 0 },      // ramp down
+            { duration: '20s', target: 3500 },  // ramp to 3500
+            { duration: '2m', target: 3500 },   // hold at peak
+            { duration: '20s', target: 0 },     // ramp down
           ],
           tags: { scenario: 'stress' },
         },
