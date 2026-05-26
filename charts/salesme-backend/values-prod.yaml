@@ -1,0 +1,18 @@
+replicaCount: 1
+
+image:
+  tag: "latest"
+
+ingress:
+  enabled: true
+  hosts:
+    - host: api.salesme.iqbalhakim.ink
+      paths:
+        - path: /
+          pathType: Prefix
+
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 70

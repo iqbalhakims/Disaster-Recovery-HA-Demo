@@ -1,0 +1,11 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "salesme-frontend.fullname" . }}
+  labels:
+    {{- include "salesme-frontend.labels" . | nindent 4 }}
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      {{- include "salesme-frontend.selectorLabels" . | nindent 6 }}

@@ -15,3 +15,6 @@ resources:
   - alert.yaml
   - argo-image-updater.yaml
   - litmuschaos.yaml
+  - salesme-infra.yaml
+  - salesme-backend.yaml
+  - salesme-frontend.yaml
