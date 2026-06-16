@@ -135,3 +135,20 @@ spec:
             host: tempo.monitoring.svc.cluster.local
             port:
               number: 3100
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: loki
+  namespace: monitoring
+spec:
+  hosts:
+    - loki.prod.iqbalhakim.ink
+  gateways:
+    - istio-system/istio-ingress-gateway
+  http:
+    - route:
+        - destination:
+            host: loki.monitoring.svc.cluster.local
+            port:
+              number: 3100
