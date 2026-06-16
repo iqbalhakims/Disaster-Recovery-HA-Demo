@@ -118,3 +118,20 @@ spec:
             host: kube-prometheus-stack-prometheus.monitoring.svc.cluster.local
             port:
               number: 9090
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: tempo
+  namespace: monitoring
+spec:
+  hosts:
+    - tempo.prod.iqbalhakim.ink
+  gateways:
+    - istio-system/istio-ingress-gateway
+  http:
+    - route:
+        - destination:
+            host: tempo.monitoring.svc.cluster.local
+            port:
+              number: 3100
